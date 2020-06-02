@@ -18,9 +18,16 @@
 
 #include "glm\glm.hpp"
 #include "glm\gtc\matrix_transform.hpp"
+#include "glm\gtc\type_ptr.hpp"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_impl_glfw_gl3.h"
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void processInput(GLFWwindow *window);
+
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
 
 
 int main(void)
@@ -35,7 +42,7 @@ int main(void)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	/* Create a windowed mode window and its OpenGL context */
-	window = glfwCreateWindow(960, 540, "Hello World", NULL, NULL);
+	window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Hello World", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -44,6 +51,8 @@ int main(void)
 
 	/* Make the window's context current */
 	glfwMakeContextCurrent(window);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
 	glfwSwapInterval(1);
 	
 
@@ -55,14 +64,69 @@ int main(void)
 
 	std::cout << glGetString(GL_VERSION) << std::endl;
   {
+	/*float positions[] = {
+		 0.5f, 0.5f, 1.0f, 1.0f,
+		 0.5f, -0.5f, 1.0f, 0.0f,
+		 -0.5f, -0.5f, 0.0f, 0.0f,
+		 -0.5f, 0.5f, 0.0f, 1.0f
+	};*/
+
 	float positions[] = {
-		 100.0f, 100.0f, 0.0f, 0.0f,
-		 400.0f, 100.0f, 1.0f, 0.0f,
-		 400.0f, 400.0f, 1.0f, 1.0f,
-		 100.0f, 400.0f, 0.0f, 1.0f
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 	};
 
-
+	glm::vec3 cubePositions[] = {
+		glm::vec3(0.0f,  0.0f,  0.0f),
+		glm::vec3(2.0f,  5.0f, -15.0f),
+		glm::vec3(-1.5f, -2.2f, -2.5f),
+		glm::vec3(-3.8f, -2.0f, -12.3f),
+		glm::vec3(2.4f, -0.4f, -3.5f),
+		glm::vec3(-1.7f,  3.0f, -7.5f),
+		glm::vec3(1.3f, -2.0f, -2.5f),
+		glm::vec3(1.5f,  2.0f, -2.5f),
+		glm::vec3(1.5f,  0.2f, -1.5f),
+		glm::vec3(-1.3f,  1.0f, -1.5f)
+	};
 
 	unsigned int indices[] = {
 		0,1,2,
@@ -73,28 +137,32 @@ int main(void)
 	GLCall(glEnable(GL_BLEND));
 
 	VertexArray va;
-	VertexBuffer vb(positions, 4 * 4 * sizeof(float));
+	VertexBuffer vb(positions, 5 * 6 * 6 * sizeof(float));
 
 	VertexBufferLayout layout;
-	layout.Push<float>(2);
+	layout.Push<float>(3);
 	layout.Push<float>(2);
 	va.AddBuffer(vb,layout);
 
 
 	IndexBuffer ib(indices, 6); 
 
-	glm::mat4 proj = glm::ortho(0.0, 960.0, 0.0, 540.0, -1.0, 1.0);
-	glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(-100, 0, 0));
 	
-
 
 	Shader shader("res/shaders/Basic.shader");
 	shader.Bind();
 	shader.SetUniform4f("u_Color", 0.2f, 0.3f, 0.8f, 1.0f);
 	
-	Texture texture("res/textures/kk.png");
+	//Texture texture("res/textures/awesomeface.png",0);
+	//texture.Bind(1);
+	//shader.SetUniform1i("u_Texture1", 1);
+
+	Texture texture("res/textures/logo1.jpg",1);
 	texture.Bind(0);
 	shader.SetUniform1i("u_Texture", 0);
+
+	
+
 
 	va.Unbind();
 	vb.Unbind();
@@ -107,45 +175,73 @@ int main(void)
 	ImGui_ImplGlfwGL3_Init(window, true);
 	ImGui::StyleColorsDark();
 
-	glm::vec3 translation(200, 200, 0);
-
+	//glm::vec3 translation(200, 200, 0);
+	float mul = 2.0;
 	float r = 0.1f, g = 0.9f, b = 0.5f;
 	float increment = 0.01f;
 	//glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window))
 	{
-		
+		// input
+		// -----
+		processInput(window);
+
+		//GLCall(glClearColor(0.3f, 0.4f, 0.5f, 1.0f));
 		renderer.Clear();
+		renderer.DepthEnable();
 
 		ImGui_ImplGlfwGL3_NewFrame();
 
-		glm::mat4 model = glm::translate(glm::mat4(1.0f),translation);
-		glm::mat4 mvp = proj * view * model;
+		
+		
+		glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+		glm::mat4 view = glm::mat4(1.0f);
+		glm::mat4 projection = glm::mat4(1.0f);
+		model = glm::rotate(model, mul*(float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
+		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+		projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
 
 		shader.Bind();
 		shader.SetUniform4f("u_Color", r, g, b, 1.0f);
-		shader.SetUniformMat4f("u_MVP", mvp);
 
 		
-		renderer.Draw(va, ib, shader);
+		shader.SetUniformMat4f("u_Model", model);
+		shader.SetUniformMat4f("u_View", view);
+		shader.SetUniformMat4f("u_Projection",projection);
+		//shader.SetUniformMat4f("u_MVP", mvp);
+		
+		for (unsigned int i = 0; i < 10; i++)
+		{
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, cubePositions[i]);
+			float angle = 20.0f * (i+2) * (float)glfwGetTime();
+			model = glm::rotate(model, glm::radians(angle), glm::vec3(mul, 0.3f, 0.5f));
+			shader.SetUniformMat4f("u_Model", model);
+
+			renderer.DrawArray(va, shader, 36);
+		}
+		
+		
+
+		
 
 		if (r > 1.0f)
 		{
-			increment = -0.01f;
+			increment = -0.02f;
 
 		}
 		else if (r < 0.0f)
-			increment = 0.005f;
+			increment = 0.05f;
 		r += increment;
 		g -= increment;
 		b += increment;
-		//glClearColor(r, g, b, 1.0f);
+		glClearColor(r, g, b, 1.0f);
 
 		{
 
-			ImGui::SliderFloat3("Translation", &translation.x, 0.0f, 960.0f);            // Edit 1 float using a slider from 0.0f to 1.0f    
+			ImGui::SliderFloat("Multiplier", &mul, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f    
 			
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		}
@@ -166,4 +262,21 @@ int main(void)
 
 	glfwTerminate();
 	return 0;
+}
+
+// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
+// ---------------------------------------------------------------------------------------------------------
+void processInput(GLFWwindow *window)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+}
+
+// glfw: whenever the window size changed (by OS or user resize) this callback function executes
+// ---------------------------------------------------------------------------------------------
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	// make sure the viewport matches the new window dimensions; note that width and 
+	// height will be significantly larger than specified on retina displays.
+	glViewport(0, 0, width, height);
 }

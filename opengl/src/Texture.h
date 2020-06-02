@@ -5,13 +5,16 @@
 class Texture
 {
 private:
+
 	unsigned int m_RendererID;
 	std::string m_Filepath;
 	unsigned char* m_LocalBuffer;
-	int m_Width, m_Height, m_BPP; //BPP is bytes per pixel 
+	int m_Width, m_Height, m_BPP , m_Type; //BPP is bytes per pixel 
 
 public:
-	Texture(const std::string& path);
+	
+	
+	Texture(const std::string& path, const unsigned int a);
 	~Texture();
 
 	void Bind(unsigned int slot = 0) const;
